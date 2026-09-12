@@ -14,29 +14,36 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +55,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -81,6 +91,15 @@ import com.techseven.foldstandby.ui.theme.NightstandInk
 import com.techseven.foldstandby.ui.theme.NightstandMuted
 import kotlinx.coroutines.launch
 
+private enum class SetupTab(
+    val labelRes: Int,
+    val icon: ImageVector
+) {
+    Standby(R.string.tab_standby, Icons.Filled.Schedule),
+    Alarms(R.string.tab_alarms, Icons.Filled.Alarm),
+    Reflections(R.string.tab_reflections, Icons.Filled.WaterDrop)
+}
+
 class SetupActivity : ComponentActivity() {
     private var permissionTick by mutableIntStateOf(0)
     private val alarmViewModel: AlarmViewModel by viewModels()
@@ -104,133 +123,192 @@ class SetupActivity : ComponentActivity() {
                 @Suppress("UNUSED_EXPRESSION")
                 permissionTick
 
-                val navController = rememberNavController()
                 val alarms by alarmViewModel.alarms.collectAsState()
                 val useAlarmSplit = rememberAlarmListDetailSplit()
                 var selectedAlarmId by remember { mutableStateOf<String?>(null) }
+                var selectedTab by remember { mutableIntStateOf(SetupTab.Standby.ordinal) }
+                val alarmNavController = rememberNavController()
 
-                NavHost(
-                    navController = navController,
-                    startDestination = "home"
-                ) {
-                    composable("home") {
-                        SetupHomeScreen(
-                            settings = settings,
-                            permissionsGranted = hasAllPermissions(),
-                            batteryUnrestricted = isBatteryUnrestricted(),
-                            onToggleEnabled = { enabled ->
-                                lifecycleScope.launch {
-                                    app.settingsRepository.setNightstandEnabled(enabled)
-                                    if (enabled) {
-                                        requestPermissionsIfNeeded()
-                                        PostureMonitorService.start(this@SetupActivity)
-                                    } else {
-                                        PostureMonitorService.stop(this@SetupActivity)
-                                    }
-                                }
-                            },
-                            onToggleForce = { enabled ->
-                                lifecycleScope.launch {
-                                    app.settingsRepository.setForceNightstand(enabled)
-                                    if (enabled) {
-                                        PostureMonitorService.start(this@SetupActivity)
-                                    }
-                                }
-                            },
-                            onToggleNightTint = { enabled ->
-                                lifecycleScope.launch {
-                                    app.settingsRepository.setNightTintEnabled(enabled)
-                                }
-                            },
-                            onAccentColor = { color ->
-                                lifecycleScope.launch {
-                                    app.settingsRepository.setAccentColor(color)
-                                }
-                            },
-                            onGrantPermissions = { requestPermissionsIfNeeded() },
-                            onBatterySettings = { openBatterySettings() },
-                            onPreview = {
-                                startActivity(Intent(this@SetupActivity, NightstandActivity::class.java))
-                            },
-                            onOpenReflection = {
-                                startActivity(Intent(this@SetupActivity, ReflectionActivity::class.java))
-                            },
-                            onOpenAlarms = { navController.navigate("alarms") }
-                        )
-                    }
-                    composable("alarms") {
-                        val editing = alarms.firstOrNull { it.id == selectedAlarmId }
-                        AlarmListScreen(
-                            alarms = alarms,
-                            canScheduleExact = alarmViewModel.canScheduleExact(),
-                            selectedAlarmId = selectedAlarmId,
-                            onBack = { navController.popBackStack() },
-                            onAdd = {
-                                val created = Alarm()
-                                selectedAlarmId = created.id
-                                navController.navigate("alarm_edit/${created.id}?new=true")
-                            },
-                            onEdit = { alarm ->
-                                selectedAlarmId = alarm.id
-                                if (!useAlarmSplit) {
-                                    navController.navigate("alarm_edit/${alarm.id}")
-                                }
-                            },
-                            onToggle = { alarm, enabled ->
-                                alarmViewModel.setEnabled(alarm.id, enabled)
-                            },
-                            editorPane = if (useAlarmSplit && editing != null) {
-                                {
-                                    AlarmEditorScreen(
-                                        initial = editing,
-                                        ringtoneTitle = alarmViewModel::ringtoneTitle,
-                                        showBack = false,
-                                        onBack = { selectedAlarmId = null },
-                                        onSave = { alarm ->
-                                            alarmViewModel.save(alarm)
-                                            selectedAlarmId = alarm.id
-                                        },
-                                        onDelete = { id ->
-                                            alarmViewModel.delete(id)
+                Scaffold(
+                    containerColor = NightstandBg,
+                    bottomBar = {
+                        NavigationBar(containerColor = Color(0xFF12110F)) {
+                            SetupTab.entries.forEachIndexed { index, tab ->
+                                NavigationBarItem(
+                                    selected = selectedTab == index,
+                                    onClick = {
+                                        selectedTab = index
+                                        if (index != SetupTab.Alarms.ordinal) {
                                             selectedAlarmId = null
                                         }
+                                    },
+                                    icon = {
+                                        Icon(
+                                            tab.icon,
+                                            contentDescription = stringResource(tab.labelRes)
+                                        )
+                                    },
+                                    label = { Text(stringResource(tab.labelRes)) },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = NightstandAccent,
+                                        selectedTextColor = NightstandAccent,
+                                        indicatorColor = NightstandAccent.copy(alpha = 0.18f),
+                                        unselectedIconColor = NightstandMuted,
+                                        unselectedTextColor = NightstandMuted
+                                    )
+                                )
+                            }
+                        }
+                    }
+                ) { padding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                    ) {
+                        when (selectedTab) {
+                            SetupTab.Standby.ordinal -> StandbyClockTab(
+                                settings = settings,
+                                permissionsGranted = hasAllPermissions(),
+                                batteryUnrestricted = isBatteryUnrestricted(),
+                                onToggleEnabled = { enabled ->
+                                    lifecycleScope.launch {
+                                        app.settingsRepository.setNightstandEnabled(enabled)
+                                        if (enabled) {
+                                            requestPermissionsIfNeeded()
+                                            PostureMonitorService.start(this@SetupActivity)
+                                        } else {
+                                            PostureMonitorService.stop(this@SetupActivity)
+                                        }
+                                    }
+                                },
+                                onToggleForce = { enabled ->
+                                    lifecycleScope.launch {
+                                        app.settingsRepository.setForceNightstand(enabled)
+                                        if (enabled) {
+                                            PostureMonitorService.start(this@SetupActivity)
+                                        }
+                                    }
+                                },
+                                onToggleNightTint = { enabled ->
+                                    lifecycleScope.launch {
+                                        app.settingsRepository.setNightTintEnabled(enabled)
+                                    }
+                                },
+                                onAccentColor = { color ->
+                                    lifecycleScope.launch {
+                                        app.settingsRepository.setAccentColor(color)
+                                    }
+                                },
+                                onGrantPermissions = { requestPermissionsIfNeeded() },
+                                onBatterySettings = { openBatterySettings() },
+                                onPreview = {
+                                    startActivity(
+                                        Intent(this@SetupActivity, NightstandActivity::class.java)
                                     )
                                 }
-                            } else null
-                        )
-                    }
-                    composable(
-                        route = "alarm_edit/{alarmId}?new={isNew}",
-                        arguments = listOf(
-                            navArgument("alarmId") { type = NavType.StringType },
-                            navArgument("isNew") {
-                                type = NavType.BoolType
-                                defaultValue = false
-                            }
-                        )
-                    ) { entry ->
-                        val alarmId = entry.arguments?.getString("alarmId") ?: return@composable
-                        val isNew = entry.arguments?.getBoolean("isNew") == true
-                        val existing = alarms.firstOrNull { it.id == alarmId }
-                        val initial = existing ?: if (isNew) Alarm(id = alarmId) else Alarm(id = alarmId)
+                            )
 
-                        AlarmEditorScreen(
-                            initial = initial,
-                            ringtoneTitle = alarmViewModel::ringtoneTitle,
-                            showBack = true,
-                            onBack = { navController.popBackStack() },
-                            onSave = { alarm ->
-                                alarmViewModel.save(alarm)
-                                selectedAlarmId = alarm.id
-                                navController.popBackStack()
-                            },
-                            onDelete = if (!isNew && existing != null) {
-                                { id ->
-                                    alarmViewModel.delete(id)
-                                    navController.popBackStack()
+                            SetupTab.Alarms.ordinal -> {
+                                NavHost(
+                                    navController = alarmNavController,
+                                    startDestination = "alarms"
+                                ) {
+                                    composable("alarms") {
+                                        val editing =
+                                            alarms.firstOrNull { it.id == selectedAlarmId }
+                                        AlarmListScreen(
+                                            alarms = alarms,
+                                            canScheduleExact = alarmViewModel.canScheduleExact(),
+                                            selectedAlarmId = selectedAlarmId,
+                                            showBack = false,
+                                            onBack = {},
+                                            onAdd = {
+                                                val created = Alarm()
+                                                selectedAlarmId = created.id
+                                                alarmNavController.navigate(
+                                                    "alarm_edit/${created.id}?new=true"
+                                                )
+                                            },
+                                            onEdit = { alarm ->
+                                                selectedAlarmId = alarm.id
+                                                if (!useAlarmSplit) {
+                                                    alarmNavController.navigate(
+                                                        "alarm_edit/${alarm.id}"
+                                                    )
+                                                }
+                                            },
+                                            onToggle = { alarm, enabled ->
+                                                alarmViewModel.setEnabled(alarm.id, enabled)
+                                            },
+                                            editorPane = if (useAlarmSplit && editing != null) {
+                                                {
+                                                    AlarmEditorScreen(
+                                                        initial = editing,
+                                                        ringtoneTitle = alarmViewModel::ringtoneTitle,
+                                                        showBack = false,
+                                                        onBack = { selectedAlarmId = null },
+                                                        onSave = { alarm ->
+                                                            alarmViewModel.save(alarm)
+                                                            selectedAlarmId = alarm.id
+                                                        },
+                                                        onDelete = { id ->
+                                                            alarmViewModel.delete(id)
+                                                            selectedAlarmId = null
+                                                        }
+                                                    )
+                                                }
+                                            } else null
+                                        )
+                                    }
+                                    composable(
+                                        route = "alarm_edit/{alarmId}?new={isNew}",
+                                        arguments = listOf(
+                                            navArgument("alarmId") { type = NavType.StringType },
+                                            navArgument("isNew") {
+                                                type = NavType.BoolType
+                                                defaultValue = false
+                                            }
+                                        )
+                                    ) { entry ->
+                                        val alarmId =
+                                            entry.arguments?.getString("alarmId") ?: return@composable
+                                        val isNew =
+                                            entry.arguments?.getBoolean("isNew") == true
+                                        val existing =
+                                            alarms.firstOrNull { it.id == alarmId }
+                                        val initial = existing
+                                            ?: if (isNew) Alarm(id = alarmId) else Alarm(id = alarmId)
+
+                                        AlarmEditorScreen(
+                                            initial = initial,
+                                            ringtoneTitle = alarmViewModel::ringtoneTitle,
+                                            showBack = true,
+                                            onBack = { alarmNavController.popBackStack() },
+                                            onSave = { alarm ->
+                                                alarmViewModel.save(alarm)
+                                                selectedAlarmId = alarm.id
+                                                alarmNavController.popBackStack()
+                                            },
+                                            onDelete = if (!isNew && existing != null) {
+                                                { id ->
+                                                    alarmViewModel.delete(id)
+                                                    alarmNavController.popBackStack()
+                                                }
+                                            } else null
+                                        )
+                                    }
                                 }
-                            } else null
-                        )
+                            }
+
+                            SetupTab.Reflections.ordinal -> ReflectionsTab(
+                                onOpenReflection = {
+                                    startActivity(
+                                        Intent(this@SetupActivity, ReflectionActivity::class.java)
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -290,7 +368,7 @@ class SetupActivity : ComponentActivity() {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SetupHomeScreen(
+private fun StandbyClockTab(
     settings: AppSettings,
     permissionsGranted: Boolean,
     batteryUnrestricted: Boolean,
@@ -300,9 +378,7 @@ private fun SetupHomeScreen(
     onAccentColor: (Int) -> Unit,
     onGrantPermissions: () -> Unit,
     onBatterySettings: () -> Unit,
-    onPreview: () -> Unit,
-    onOpenReflection: () -> Unit,
-    onOpenAlarms: () -> Unit
+    onPreview: () -> Unit
 ) {
     val widthClass = rememberAppWidthClass()
     Column(
@@ -406,36 +482,8 @@ private fun SetupHomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Button(
-            onClick = onOpenAlarms,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = NightstandAccent,
-                contentColor = NightstandBg
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-        ) {
-            Text(stringResource(R.string.alarms), fontSize = 16.sp)
-        }
-
-        OutlinedButton(
-            onClick = onOpenReflection,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-        ) {
-            Text(stringResource(R.string.flex_reflection), color = NightstandInk, fontSize = 16.sp)
-        }
-        Text(
-            text = stringResource(R.string.flex_reflection_hint),
-            color = NightstandMuted,
-            fontSize = 13.sp
-        )
-
         if (BuildConfig.DEBUG) {
+            Spacer(modifier = Modifier.height(4.dp))
             Button(
                 onClick = onPreview,
                 colors = ButtonDefaults.buttonColors(
@@ -446,6 +494,61 @@ private fun SetupHomeScreen(
             ) {
                 Text(stringResource(R.string.preview_nightstand))
             }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun ReflectionsTab(
+    onOpenReflection: () -> Unit
+) {
+    val widthClass = rememberAppWidthClass()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(NightstandBg)
+            .verticalScroll(rememberScrollState())
+            .padding(screenPadding(widthClass))
+            .then(
+                contentMaxWidth(widthClass)?.let { Modifier.widthIn(max = it) } ?: Modifier
+            ),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.reflections_title),
+            color = NightstandInk,
+            fontSize = 36.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = stringResource(R.string.reflections_subtitle),
+            color = NightstandMuted,
+            fontSize = 16.sp
+        )
+        Text(
+            text = stringResource(R.string.flex_reflection_hint),
+            color = NightstandMuted,
+            fontSize = 14.sp
+        )
+        Text(
+            text = stringResource(R.string.reflection_drm_tip),
+            color = NightstandMuted,
+            fontSize = 13.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onOpenReflection,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = NightstandAccent,
+                contentColor = NightstandBg
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        ) {
+            Text(stringResource(R.string.reflections_open), fontSize = 16.sp)
         }
     }
 }

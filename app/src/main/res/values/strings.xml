@@ -8,6 +8,12 @@
     <string name="channel_alarm_desc">Alarm ringing alerts</string>
     <string name="setup_title">FoldStandBy</string>
     <string name="setup_subtitle">Nightstand mode for folding phones</string>
+    <string name="tab_standby">Standby</string>
+    <string name="tab_alarms">Alarms</string>
+    <string name="tab_reflections">Reflections</string>
+    <string name="reflections_title">Flex Reflection</string>
+    <string name="reflections_subtitle">Ambient mirror of a paired video app in tabletop mode</string>
+    <string name="reflections_open">Open Flex Reflection</string>
     <string name="enable_nightstand">Enable nightstand</string>
     <string name="force_nightstand">Debug: force nightstand</string>
     <string name="night_tint">Night tint in low light</string>
@@ -48,4 +54,6 @@
     <string name="reflection_drm_tip">DRM-protected video (e.g. many Netflix streams) appears black — pick a non-secure player like YouTube or Gallery.</string>
     <string name="reflection_pick_app">In the system picker, choose the paired video app window — not the entire screen.</string>
     <string name="reflection_idle">Capture is off. Start capture and select the video app above the hinge.</string>
+    <string name="reflection_show_controls">Show controls</string>
+    <string name="reflection_hide_controls">Hide controls</string>
 </resources>

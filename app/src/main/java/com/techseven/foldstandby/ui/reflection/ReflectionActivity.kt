@@ -25,13 +25,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -158,11 +169,14 @@ class ReflectionActivity : ComponentActivity() {
         height: Int,
         dpi: Int
     ) {
+        val w = width.coerceAtLeast(1)
+        val h = height.coerceAtLeast(1)
+        surfaceTexture.setDefaultBufferSize(w, h)
         if (outputSurface == null) {
             outputSurface = Surface(surfaceTexture)
         }
-        pendingWidth = width
-        pendingHeight = height
+        pendingWidth = w
+        pendingHeight = h
         pendingDpi = dpi
         flushPendingSurface()
     }
@@ -208,6 +222,12 @@ fun ReflectionScreen(
 ) {
     val density = LocalDensity.current
     val floorTint = Color(0xFF0D0D0D)
+    var controlsVisible by remember { mutableStateOf(!capturing) }
+
+    // Immersive reflection: hide tips/buttons once capture is running
+    LaunchedEffect(capturing) {
+        controlsVisible = !capturing
+    }
 
     Box(
         modifier = Modifier
@@ -215,13 +235,13 @@ fun ReflectionScreen(
             .background(NightstandBg)
             .safeDrawingPadding()
     ) {
+        // Reflection visuals always stay on while capturing
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(floorTint)
         ) {
             if (capturing) {
-                // Mirror + perspective first; falloff overlay stays in screen space
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -240,7 +260,6 @@ fun ReflectionScreen(
                         )
                     }
                 }
-                // Distance decay toward the bottom edge (away from hinge)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -255,83 +274,109 @@ fun ReflectionScreen(
                                     )
                                 )
                             )
-                            // Ambient floor mix (~45% max reflection)
                             drawRect(Color.Black.copy(alpha = 0.55f))
                         }
                 )
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!isTabletop) {
-                    Text(
-                        text = stringResource(R.string.reflection_coach),
-                        color = NightstandMuted,
-                        fontSize = 14.sp
-                    )
-                }
-                if (!capturing) {
-                    Text(
-                        text = stringResource(R.string.reflection_idle),
-                        color = NightstandInk,
-                        fontSize = 15.sp
-                    )
-                    Text(
-                        text = stringResource(R.string.reflection_pick_app),
-                        color = NightstandMuted,
-                        fontSize = 13.sp
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.reflection_drm_tip),
-                    color = NightstandMuted,
-                    fontSize = 12.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+        if (controlsVisible) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                if (capturing) {
-                    Button(
-                        onClick = onStopCapture,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = NightstandAccent,
-                            contentColor = NightstandBg
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.reflection_stop))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!isTabletop) {
+                        Text(
+                            text = stringResource(R.string.reflection_coach),
+                            color = NightstandMuted,
+                            fontSize = 14.sp
+                        )
                     }
-                } else {
-                    Button(
-                        onClick = onStartCapture,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = NightstandAccent,
-                            contentColor = NightstandBg
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.reflection_start))
+                    if (!capturing) {
+                        Text(
+                            text = stringResource(R.string.reflection_idle),
+                            color = NightstandInk,
+                            fontSize = 15.sp
+                        )
+                        Text(
+                            text = stringResource(R.string.reflection_pick_app),
+                            color = NightstandMuted,
+                            fontSize = 13.sp
+                        )
                     }
+                    Text(
+                        text = stringResource(R.string.reflection_drm_tip),
+                        color = NightstandMuted,
+                        fontSize = 12.sp
+                    )
                 }
-                OutlinedButton(
-                    onClick = onClose,
-                    modifier = Modifier.weight(1f)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 56.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.reflection_close), color = NightstandInk)
+                    if (capturing) {
+                        Button(
+                            onClick = onStopCapture,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NightstandAccent,
+                                contentColor = NightstandBg
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(stringResource(R.string.reflection_stop))
+                        }
+                    } else {
+                        Button(
+                            onClick = onStartCapture,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NightstandAccent,
+                                contentColor = NightstandBg
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(stringResource(R.string.reflection_start))
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = onClose,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.reflection_close), color = NightstandInk)
+                    }
                 }
             }
+        }
+
+        IconButton(
+            onClick = { controlsVisible = !controlsVisible },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .size(40.dp)
+                .background(NightstandInk.copy(alpha = 0.22f), CircleShape),
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = NightstandInk
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MoreHoriz,
+                contentDescription = stringResource(
+                    if (controlsVisible) {
+                        R.string.reflection_hide_controls
+                    } else {
+                        R.string.reflection_show_controls
+                    }
+                )
+            )
         }
     }
 }

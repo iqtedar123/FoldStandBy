@@ -177,7 +177,14 @@ class ReflectionCaptureService : Service() {
         if (!surface.isValid) return
         if (displayWidth <= 0 || displayHeight <= 0 || densityDpi <= 0) return
 
-        releaseVirtualDisplay()
+        // Android 14+: createVirtualDisplay may only be called once per MediaProjection.
+        val existing = virtualDisplay
+        if (existing != null) {
+            existing.resize(displayWidth, displayHeight, densityDpi)
+            existing.setSurface(surface)
+            return
+        }
+
         virtualDisplay = projection.createVirtualDisplay(
             VIRTUAL_DISPLAY_NAME,
             displayWidth,

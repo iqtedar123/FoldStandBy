@@ -69,7 +69,8 @@ fun AlarmListScreen(
     onAdd: () -> Unit,
     onEdit: (Alarm) -> Unit,
     onToggle: (Alarm, Boolean) -> Unit,
-    editorPane: (@Composable () -> Unit)? = null
+    editorPane: (@Composable () -> Unit)? = null,
+    showBack: Boolean = true
 ) {
     val widthClass = rememberAppWidthClass()
     val useSplit = rememberAlarmListDetailSplit() && editorPane != null
@@ -90,12 +91,14 @@ fun AlarmListScreen(
                 .align(Alignment.TopCenter)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back),
-                        tint = NightstandInk
-                    )
+                if (showBack) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                            tint = NightstandInk
+                        )
+                    }
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
