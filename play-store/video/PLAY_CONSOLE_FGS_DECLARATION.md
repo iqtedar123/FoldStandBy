@@ -45,3 +45,7 @@ If the service is stopped or delayed, FoldStandBy cannot detect when the phone i
 ### Video link
 
 *(paste YouTube unlisted or Drive link after upload)*
+
+---
+
+For the `mediaProjection` / `FOREGROUND_SERVICE_MEDIA_PROJECTION` declaration, see `PLAY_CONSOLE_FGS_MEDIA_PROJECTION.md` and `fgs-media-projection-demo.mp4`.
