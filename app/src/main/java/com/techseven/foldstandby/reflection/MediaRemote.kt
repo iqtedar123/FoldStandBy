@@ -14,18 +14,28 @@ import androidx.core.app.NotificationManagerCompat
 
 /** Controls the active playback app (App Pair partner) via MediaSession when possible. */
 object MediaRemote {
-    fun playPause(context: Context) {
+    fun isPlaying(context: Context): Boolean {
+        val state = activeController(context)?.playbackState?.state ?: return false
+        return state == PlaybackState.STATE_PLAYING ||
+            state == PlaybackState.STATE_BUFFERING ||
+            state == PlaybackState.STATE_FAST_FORWARDING ||
+            state == PlaybackState.STATE_REWINDING
+    }
+
+    /** Toggles play/pause and returns whether media is playing afterward when known. */
+    fun playPause(context: Context): Boolean? {
         val controller = activeController(context)
         if (controller != null) {
-            val state = controller.playbackState?.state
-            if (state == PlaybackState.STATE_PLAYING) {
+            val playing = isPlaying(context)
+            if (playing) {
                 controller.transportControls.pause()
             } else {
                 controller.transportControls.play()
             }
-            return
+            return !playing
         }
         dispatchKey(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+        return null
     }
 
     fun skipBack10(context: Context) {

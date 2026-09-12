@@ -261,12 +261,23 @@ fun ReflectionScreen(
 
     var controlsVisible by remember { mutableStateOf(true) }
     var infoExpanded by remember { mutableStateOf(false) }
-    var pausedOptimistic by remember { mutableStateOf(false) }
+    var isPlaying by remember { mutableStateOf(MediaRemote.isPlaying(context)) }
     var hideNonce by remember { mutableStateOf(0) }
 
     fun bumpInteraction() {
         hideNonce++
         controlsVisible = true
+    }
+
+    // Keep icon in sync with the paired app's MediaSession
+    LaunchedEffect(controlsVisible, capturing, hideNonce) {
+        if (!controlsVisible) return@LaunchedEffect
+        while (true) {
+            if (MediaRemote.isNotificationAccessEnabled(context)) {
+                isPlaying = MediaRemote.isPlaying(context)
+            }
+            delay(400)
+        }
     }
 
     LaunchedEffect(capturing) {
@@ -276,6 +287,7 @@ fun ReflectionScreen(
         } else {
             controlsVisible = true
             hideNonce++
+            isPlaying = MediaRemote.isPlaying(context)
         }
     }
 
@@ -360,7 +372,7 @@ fun ReflectionScreen(
                 isTabletop = isTabletop,
                 capturing = capturing,
                 infoExpanded = infoExpanded,
-                paused = pausedOptimistic,
+                isPlaying = isPlaying,
                 onToggleInfo = {
                     infoExpanded = !infoExpanded
                     bumpInteraction()
@@ -376,8 +388,8 @@ fun ReflectionScreen(
                 },
                 onPlayPause = {
                     bumpInteraction()
-                    MediaRemote.playPause(context)
-                    pausedOptimistic = !pausedOptimistic
+                    val next = MediaRemote.playPause(context)
+                    isPlaying = next ?: !isPlaying
                 },
                 onSkipBack = {
                     bumpInteraction()
@@ -432,7 +444,7 @@ private fun FlexControlsPanel(
     isTabletop: Boolean,
     capturing: Boolean,
     infoExpanded: Boolean,
-    paused: Boolean,
+    isPlaying: Boolean,
     onToggleInfo: () -> Unit,
     onClose: () -> Unit,
     onStartCapture: () -> Unit,
@@ -644,7 +656,8 @@ private fun FlexControlsPanel(
                     .fillMaxHeight()
             ) {
                 Icon(
-                    imageVector = if (paused) Icons.Filled.PlayArrow else Icons.Filled.Pause,
+                    // Playing → show pause; paused → show play
+                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                     contentDescription = stringResource(R.string.reflection_play_pause),
                     tint = NightstandInk,
                     modifier = Modifier.size(32.dp)
