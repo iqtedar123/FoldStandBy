@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single-color silhouette for Material You themed icons / icon packs. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Left foldable half (solid) -->
+    <group
+        android:pivotX="42"
+        android:pivotY="76"
+        android:rotation="-36"
+        android:translateX="6"
+        android:translateY="-10">
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M31,40h22c2.2,0 4,1.8 4,4v36c0,2.2 -1.8,4 -4,4h-22c-2.2,0 -4,-1.8 -4,-4v-36c0,-2.2 1.8,-4 4,-4z" />
+    </group>
+
+    <!-- Right foldable half with clock face cut out -->
+    <group
+        android:pivotX="66"
+        android:pivotY="76"
+        android:rotation="36"
+        android:translateX="-6"
+        android:translateY="-10">
+        <path
+            android:fillColor="#FF000000"
+            android:fillType="evenOdd"
+            android:pathData="M55,40h22c2.2,0 4,1.8 4,4v36c0,2.2 -1.8,4 -4,4h-22c-2.2,0 -4,-1.8 -4,-4v-36c0,-2.2 1.8,-4 4,-4zM66,59m-8.5,0a8.5,8.5 0,1 1,17 0a8.5,8.5 0,1 1,-17 0" />
+        <!-- Hands sit in the cutout so they remain visible when tinted -->
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M65,52h2v8h-2z" />
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M66,58h6.5v2h-6.5z" />
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M66,59m-1.7,0a1.7,1.7 0,1 1,3.4 0a1.7,1.7 0,1 1,-3.4 0" />
+    </group>
+
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M54,28c-2.2,0 -4,1.3 -4,3v2c0,0.6 0.4,1 1,1h6c0.6,0 1,-0.4 1,-1v-2c0,-1.7 -1.8,-3 -4,-3z" />
+</vector>
