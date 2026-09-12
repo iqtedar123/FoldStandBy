@@ -269,7 +269,6 @@ fun ReflectionScreen(
         controlsVisible = true
     }
 
-    // Keep controls up until capture starts; then auto-hide after a few seconds
     LaunchedEffect(capturing) {
         if (!capturing) {
             controlsVisible = true
@@ -305,7 +304,6 @@ fun ReflectionScreen(
                 }
             )
     ) {
-        // Ambient reflection (visible when chrome is hidden)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -321,7 +319,6 @@ fun ReflectionScreen(
                             cameraDistance = 16f * density.density
                             alpha = 0.9f
                         }
-                        // Extra blur under chrome reads as frosted glass behind tiles
                         .blur(if (controlsVisible) 28.dp else 16.dp)
                 ) {
                     if (contentVisible) {
@@ -406,7 +403,6 @@ fun ReflectionScreen(
             )
         }
 
-        // Corner affordance — show controls again when chrome is hidden
         if (!controlsVisible) {
             IconButton(
                 onClick = {
@@ -474,9 +470,8 @@ private fun FlexControlsPanel(
                 onClick = onUserInteract
             )
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Top row: close + info tile
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -626,13 +621,11 @@ private fun FlexControlsPanel(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Transport: skip | play/pause (~2×) | skip — same height as Flex reference
+        // Media row fills remaining space (no empty gap under the info tile)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .weight(1f),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -654,7 +647,7 @@ private fun FlexControlsPanel(
                     imageVector = if (paused) Icons.Filled.PlayArrow else Icons.Filled.Pause,
                     contentDescription = stringResource(R.string.reflection_play_pause),
                     tint = NightstandInk,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
 
@@ -667,7 +660,6 @@ private fun FlexControlsPanel(
             )
         }
 
-        // Volume row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
