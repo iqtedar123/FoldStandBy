@@ -12,6 +12,30 @@ When enabled, FoldStandBy watches for **tent posture** (book-style folds) or a *
 
 Tap anywhere (when not ringing) to dismiss and return to the system lock screen.
 
+## Screenshots
+
+### Nightstand
+
+![Nightstand clock](docs/screenshots/nightstand.png)
+
+### Setup
+
+<p>
+  <img src="docs/screenshots/settings.png" alt="Standby settings" width="280" />
+  &nbsp;
+  <img src="docs/screenshots/alarms.png" alt="Alarms" width="280" />
+</p>
+
+### Flex Reflection (Z Fold tabletop)
+
+Ambient mirror of a paired video app on the lower half:
+
+![Flex Reflection immersive](docs/screenshots/foldable-tabletop.png)
+
+Media controls over frosted glass:
+
+![Flex Reflection controls](docs/screenshots/flex-reflection.png)
+
 ## Alarms
 
 1. Open the app → **Alarms**.
@@ -59,9 +83,10 @@ Turn on **Debug: force nightstand** to launch the nightstand UI without fold har
 
 1. Create an **App Pair**: video app (YouTube, Gallery, etc.) on top + FoldStandBy on the bottom.
 2. Fold into **tabletop** (half-open, horizontal hinge).
-3. Open FoldStandBy → **Flex Reflection** → **Start capture**.
+3. Open FoldStandBy → **Reflections** → **Open Flex Reflection** → **Start capture**.
 4. In the system picker, choose the **paired video app window** (not the entire screen).
 5. The lower half shows a mirrored, blurred ambient reflection of that app.
+6. Optional: enable **notification access** so skip / play controls can drive the paired player.
 
 DRM / `FLAG_SECURE` streams (many Netflix titles) cannot be captured and appear black.
 
@@ -71,6 +96,7 @@ DRM / `FLAG_SECURE` streams (many Netflix titles) cannot be captured and appear 
 - `NightstandActivity` — `showWhenLocked` + `turnScreenOn`, `FLAG_KEEP_SCREEN_ON`, window brightness ~8%. Does **not** dismiss the keyguard.
 - `AlarmScheduler` / `AlarmReceiver` — `AlarmManager.setAlarmClock` for exact wake while locked.
 - Adaptive layouts use width classes (`<600` / `600–840` / `>840`) for setup/alarms; nightstand tunes for cover-narrow (`<420dp`) and fold-aware padding.
+- Flex Reflection uses `MediaProjection` + frosted media controls on the lower App Pair pane.
 
 ## Play policy note
 
