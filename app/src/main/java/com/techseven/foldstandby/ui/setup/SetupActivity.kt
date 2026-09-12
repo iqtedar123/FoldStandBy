@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -75,6 +76,7 @@ import com.techseven.foldstandby.R
 import com.techseven.foldstandby.data.Alarm
 import com.techseven.foldstandby.data.AppSettings
 import com.techseven.foldstandby.posture.PostureMonitorService
+import com.techseven.foldstandby.reflection.MediaRemote
 import com.techseven.foldstandby.ui.adaptive.contentMaxWidth
 import com.techseven.foldstandby.ui.adaptive.rememberAlarmListDetailSplit
 import com.techseven.foldstandby.ui.adaptive.rememberAppWidthClass
@@ -505,6 +507,8 @@ private fun ReflectionsTab(
     onOpenReflection: () -> Unit
 ) {
     val widthClass = rememberAppWidthClass()
+    val context = LocalContext.current
+    val mediaAccessEnabled = MediaRemote.isNotificationAccessEnabled(context)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -537,6 +541,19 @@ private fun ReflectionsTab(
             color = NightstandMuted,
             fontSize = 13.sp
         )
+        if (!mediaAccessEnabled) {
+            Text(
+                text = stringResource(R.string.reflection_media_access),
+                color = NightstandMuted,
+                fontSize = 13.sp
+            )
+            OutlinedButton(
+                onClick = { MediaRemote.openNotificationAccessSettings(context) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.reflection_media_access_action), color = NightstandInk)
+            }
+        }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = onOpenReflection,

@@ -56,4 +56,15 @@
     <string name="reflection_idle">Capture is off. Start capture and select the video app above the hinge.</string>
     <string name="reflection_show_controls">Show controls</string>
     <string name="reflection_hide_controls">Hide controls</string>
+    <string name="reflection_info_title">Flex Reflection</string>
+    <string name="reflection_info_capturing">Reflecting paired app</string>
+    <string name="reflection_info_idle">Capture off · tap for options</string>
+    <string name="reflection_play_pause">Play or pause</string>
+    <string name="reflection_skip_back">Skip back 10 seconds</string>
+    <string name="reflection_skip_forward">Skip forward 10 seconds</string>
+    <string name="reflection_volume_up">Volume up</string>
+    <string name="reflection_volume_down">Volume down</string>
+    <string name="reflection_volume_mute">Mute</string>
+    <string name="reflection_media_access">Allow notification access so skip and play controls can drive the paired video app.</string>
+    <string name="reflection_media_access_action">Enable media controls</string>
 </resources>
